@@ -102,8 +102,6 @@ pub struct NativeECConfig<F: PrimeField> {
 }
 
 impl<F: PrimeField> NativeECConfig<F> {
-    // const PARAM_A: u64 = 168700;
-    // const PARAM_D: u64 = 168696;
     pub fn configure(gate: FlexGateConfig<F>) -> Self {
         Self { gate }
     }
@@ -112,6 +110,12 @@ impl<F: PrimeField> NativeECConfig<F> {
         let base_point = Point::base_point();
         let x = self.gate.load_constant(ctx, base_point.x);
         let y = self.gate.load_constant(ctx, base_point.y);
+        AssignedPoint { x, y }
+    }
+
+    pub fn load_identity<'a>(&self, ctx: &mut Context<F>) -> AssignedPoint<'a, F> {
+        let x = self.gate.load_constant(ctx, F::zero());
+        let y = self.gate.load_constant(ctx, F::one());
         AssignedPoint { x, y }
     }
 
@@ -313,7 +317,7 @@ impl<F: PrimeField> NativeECConfig<F> {
     ) -> AssignedPoint<'a, F> {
         let gate = &self.gate;
         let scalar_bits = gate.num_to_bits(ctx, scalar, F::NUM_BITS as usize);
-        let mut out = self.load_base_point(ctx);
+        let mut out = self.load_identity(ctx);
         let mut doubled: AssignedPoint<F> = point.clone();
         println!("scalar {:?}", scalar);
         for bit in scalar_bits.into_iter() {
@@ -462,15 +466,6 @@ mod test {
                         );
                     }
                     {
-                        let added = config.add(ctx, &base_point, &base_point);
-                        let is_eq = config.is_equal(ctx, &added, &base_point);
-                        config.gate.assert_equal(
-                            ctx,
-                            QuantumCell::Constant(F::one()),
-                            QuantumCell::Existing(&is_eq),
-                        );
-                    }
-                    {
                         let three = config.gate.load_constant(ctx, F::from(3u64));
                         let three_muled = config.scalar_mul(ctx, &assigned_point_a, &three);
                         let doubled = config.double(ctx, &assigned_point_a);
@@ -478,11 +473,11 @@ mod test {
                         let is_eq = config.is_equal(ctx, &three_muled, &added);
                         println!("three_muled {:?}", three_muled);
                         println!("added {:?}", doubled);
-                        // config.gate.assert_equal(
-                        //     ctx,
-                        //     QuantumCell::Constant(F::one()),
-                        //     QuantumCell::Existing(&is_eq),
-                        // );
+                        config.gate.assert_equal(
+                            ctx,
+                            QuantumCell::Constant(F::one()),
+                            QuantumCell::Existing(&is_eq),
+                        );
                     }
                     Ok(())
                 },
@@ -492,15 +487,9 @@ mod test {
     }
 
     impl<F: PrimeField> TestCircuit1<F> {
-        // const PARAM_A: u64 = 168700;
-        // const PARAM_D: u64 = 168696;
         const NUM_ADVICE: usize = 10;
         const NUM_FIXED: usize = 1;
         const K: usize = 15;
-        // const BASE_POINT_X: &'static str =
-        //     "5299619240641551281634865583518297030282874472190772894086521144482721001553";
-        // const BASE_POINT_Y: &'static str =
-        //     "16950150798460657717958625567821834550301663161624707787222815936182638968203";
     }
 
     #[test]
