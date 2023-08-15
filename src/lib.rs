@@ -36,46 +36,46 @@ pub struct Point<F: PrimeField> {
     y: F,
 }
 
-impl<F: PrimeField> Add<Self> for Point<F> {
-    type Output = Self;
+// impl<F: PrimeField> Add<Self> for Point<F> {
+//     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        let beta = self.x * rhs.y;
-        let gamma = self.y * rhs.x;
-        let delta = (-F::from(PARAM_A) * self.x + self.y) * (rhs.x + rhs.y);
-        let tau = beta * gamma;
-        let new_x_denom = (F::from(1) + F::from(PARAM_D) * tau).invert().unwrap();
-        let new_x = (beta + gamma) * new_x_denom;
-        let new_y_denom = (F::from(1) - F::from(PARAM_D) * tau).invert().unwrap();
-        let new_y = (delta + F::from(PARAM_A) * beta - gamma) * new_y_denom;
-        Point::new(new_x, new_y)
-    }
-}
+//     fn add(self, rhs: Self) -> Self::Output {
+//         let beta = self.x * rhs.y;
+//         let gamma = self.y * rhs.x;
+//         let delta = (-F::from(PARAM_A) * self.x + self.y) * (rhs.x + rhs.y);
+//         let tau = beta * gamma;
+//         let new_x_denom = (F::from(1) + F::from(PARAM_D) * tau).invert().unwrap();
+//         let new_x = (beta + gamma) * new_x_denom;
+//         let new_y_denom = (F::from(1) - F::from(PARAM_D) * tau).invert().unwrap();
+//         let new_y = (delta + F::from(PARAM_A) * beta - gamma) * new_y_denom;
+//         Point::new(new_x, new_y)
+//     }
+// }
 
-impl<F: PrimeField> Mul<F> for Point<F> {
-    type Output = Self;
+// impl<F: PrimeField> Mul<F> for Point<F> {
+//     type Output = Self;
 
-    fn mul(self, rhs: F) -> Self::Output {
-        let mut out = Point::new(F::zero(), F::zero());
-        let mut doubled = self.clone();
-        let scalar_big = fe_to_biguint(&rhs);
-        let scalar_bytes = scalar_big.to_bytes_le();
-        let num_bits = scalar_big.bits();
-        for i in 0..num_bits {
-            if scalar_bytes[i as usize / 8] & (1 << (i % 8)) != 0 {
-                out = out + doubled.clone();
-            }
-            doubled = doubled.clone() + doubled;
-        }
-        // for bit in rhs.to_().as_ref().iter().rev() {
-        //     if bit {
-        //         out = out + doubled.clone();
-        //     }
-        //     doubled = doubled + doubled;
-        // }
-        out
-    }
-}
+//     fn mul(self, rhs: F) -> Self::Output {
+//         let mut out = Point::new(F::zero(), F::zero());
+//         let mut doubled = self.clone();
+//         let scalar_big = fe_to_biguint(&rhs);
+//         let scalar_bytes = scalar_big.to_bytes_le();
+//         let num_bits = scalar_big.bits();
+//         for i in 0..num_bits {
+//             if scalar_bytes[i as usize / 8] & (1 << (i % 8)) != 0 {
+//                 out = out + doubled.clone();
+//             }
+//             doubled = doubled.clone() + doubled;
+//         }
+//         // for bit in rhs.to_().as_ref().iter().rev() {
+//         //     if bit {
+//         //         out = out + doubled.clone();
+//         //     }
+//         //     doubled = doubled + doubled;
+//         // }
+//         out
+//     }
+// }
 
 impl<F: PrimeField> Point<F> {
     pub fn new(x: F, y: F) -> Self {
