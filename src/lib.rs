@@ -99,31 +99,19 @@ pub struct AssignedPoint<'a, F: PrimeField> {
 #[derive(Debug, Clone)]
 pub struct NativeECConfig<F: PrimeField> {
     pub gate: FlexGateConfig<F>,
-    param_a: u64,
-    param_d: u64,
-    pub base_point: Point<F>,
 }
 
 impl<F: PrimeField> NativeECConfig<F> {
     // const PARAM_A: u64 = 168700;
     // const PARAM_D: u64 = 168696;
-    pub fn configure(
-        gate: FlexGateConfig<F>,
-        param_a: u64,
-        param_d: u64,
-        base_point: Point<F>,
-    ) -> Self {
-        Self {
-            gate,
-            param_a,
-            param_d,
-            base_point,
-        }
+    pub fn configure(gate: FlexGateConfig<F>) -> Self {
+        Self { gate }
     }
 
     pub fn load_base_point<'a>(&self, ctx: &mut Context<F>) -> AssignedPoint<'a, F> {
-        let x = self.gate.load_constant(ctx, self.base_point.x);
-        let y = self.gate.load_constant(ctx, self.base_point.y);
+        let base_point = Point::base_point();
+        let x = self.gate.load_constant(ctx, base_point.x);
+        let y = self.gate.load_constant(ctx, base_point.y);
         AssignedPoint { x, y }
     }
 
@@ -156,7 +144,7 @@ impl<F: PrimeField> NativeECConfig<F> {
         // a*x2 + y2 === 1 + d*x2*y2;
         let left_term = self.gate.mul_add(
             ctx,
-            QuantumCell::Constant(F::from(self.param_a)),
+            QuantumCell::Constant(F::from(PARAM_A)),
             QuantumCell::Existing(&x2),
             QuantumCell::Existing(&y2),
         );
@@ -167,7 +155,7 @@ impl<F: PrimeField> NativeECConfig<F> {
             self.gate.mul_add(
                 ctx,
                 QuantumCell::Existing(&muled),
-                QuantumCell::Constant(F::from(self.param_d)),
+                QuantumCell::Constant(F::from(PARAM_D)),
                 QuantumCell::Constant(F::one()),
             )
         };
@@ -198,7 +186,7 @@ impl<F: PrimeField> NativeECConfig<F> {
         let delta = {
             let factor1 = self.gate.mul_add(
                 ctx,
-                QuantumCell::Constant(-F::from(self.param_a)),
+                QuantumCell::Constant(-F::from(PARAM_A)),
                 QuantumCell::Existing(&point1.x),
                 QuantumCell::Existing(&point1.y),
             );
@@ -225,7 +213,7 @@ impl<F: PrimeField> NativeECConfig<F> {
         );
         let one_d_tau1 = self.gate.mul_add(
             ctx,
-            QuantumCell::Constant(F::from(self.param_d)),
+            QuantumCell::Constant(F::from(PARAM_D)),
             QuantumCell::Existing(&tau),
             QuantumCell::Constant(F::one()),
         );
@@ -250,7 +238,7 @@ impl<F: PrimeField> NativeECConfig<F> {
             let term1 = self.gate.mul_add(
                 ctx,
                 QuantumCell::Existing(&beta),
-                QuantumCell::Constant(F::from(self.param_a)),
+                QuantumCell::Constant(F::from(PARAM_A)),
                 QuantumCell::Existing(&delta),
             );
             self.gate.sub(
@@ -262,7 +250,7 @@ impl<F: PrimeField> NativeECConfig<F> {
         let one_d_tau2 = {
             let muled = self.gate.mul(
                 ctx,
-                QuantumCell::Constant(F::from(self.param_d)),
+                QuantumCell::Constant(F::from(PARAM_D)),
                 QuantumCell::Existing(&tau),
             );
             self.gate.sub(
@@ -415,12 +403,9 @@ mod test {
                 0,
                 Self::K,
             );
-            let base_point = Point {
-                x: F::from_str_vartime(Self::BASE_POINT_X).unwrap(),
-                y: F::from_str_vartime(Self::BASE_POINT_Y).unwrap(),
-            };
-            println!("base_point {:?}", base_point);
-            NativeECConfig::configure(gate, Self::PARAM_A, Self::PARAM_D, base_point)
+            // let base_point = Point::base_point();
+            // println!("base_point {:?}", base_point);
+            NativeECConfig::configure(gate)
         }
 
         fn synthesize(
@@ -507,15 +492,15 @@ mod test {
     }
 
     impl<F: PrimeField> TestCircuit1<F> {
-        const PARAM_A: u64 = 168700;
-        const PARAM_D: u64 = 168696;
+        // const PARAM_A: u64 = 168700;
+        // const PARAM_D: u64 = 168696;
         const NUM_ADVICE: usize = 10;
         const NUM_FIXED: usize = 1;
         const K: usize = 15;
-        const BASE_POINT_X: &'static str =
-            "5299619240641551281634865583518297030282874472190772894086521144482721001553";
-        const BASE_POINT_Y: &'static str =
-            "16950150798460657717958625567821834550301663161624707787222815936182638968203";
+        // const BASE_POINT_X: &'static str =
+        //     "5299619240641551281634865583518297030282874472190772894086521144482721001553";
+        // const BASE_POINT_Y: &'static str =
+        //     "16950150798460657717958625567821834550301663161624707787222815936182638968203";
     }
 
     #[test]
