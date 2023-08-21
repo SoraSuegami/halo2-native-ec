@@ -471,8 +471,6 @@ mod test {
                         let doubled = config.double(ctx, &assigned_point_a);
                         let added = config.add(ctx, &doubled, &assigned_point_a);
                         let is_eq = config.is_equal(ctx, &three_muled, &added);
-                        println!("three_muled {:?}", three_muled);
-                        println!("added {:?}", doubled);
                         config.gate.assert_equal(
                             ctx,
                             QuantumCell::Constant(F::one()),
