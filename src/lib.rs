@@ -292,8 +292,8 @@ impl<F: PrimeField> NativeECConfig<F> {
         ctx: &mut Context<F>,
         point: &AssignedPoint<'a, F>,
     ) -> AssignedPoint<'a, F> {
-        let x = point.x.clone();
-        let y = self.gate.neg(ctx, QuantumCell::Existing(&point.y));
+        let x = self.gate.neg(ctx, QuantumCell::Existing(&point.x));
+        let y = point.y.clone();
         AssignedPoint { x, y }
     }
 
@@ -468,16 +468,15 @@ mod test {
                         let added = config.add(ctx, &assigned_point_a, &neg_a);
                         let zero = config.load_identity(ctx);
                         let is_eq = config.is_equal(ctx, &added, &zero);
-                        // config.gate.assert_equal(
-                        //     ctx,
-                        //     QuantumCell::Constant(F::one()),
-                        //     QuantumCell::Existing(&is_eq),
-                        // );
+                        config.gate.assert_equal(
+                            ctx,
+                            QuantumCell::Constant(F::one()),
+                            QuantumCell::Existing(&is_eq),
+                        );
                     }
                     {
                         let added = config.add(ctx, &assigned_point_a, &assigned_point_a);
                         let doubled = config.double(ctx, &assigned_point_a);
-                        // let added = config.add(ctx, &doubled, &assigned_point_a);
                         let is_eq = config.is_equal(ctx, &added, &doubled);
                         config.gate.assert_equal(
                             ctx,
