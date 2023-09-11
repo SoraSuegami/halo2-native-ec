@@ -287,6 +287,16 @@ impl<F: PrimeField> NativeECConfig<F> {
         self.add(ctx, point, point)
     }
 
+    pub fn neg<'a>(
+        &self,
+        ctx: &mut Context<F>,
+        point: &AssignedPoint<'a, F>,
+    ) -> AssignedPoint<'a, F> {
+        let x = point.x.clone();
+        let y = self.gate.neg(ctx, QuantumCell::Existing(&point.y));
+        AssignedPoint { x, y }
+    }
+
     pub fn select_point<'a>(
         &self,
         ctx: &mut Context<F>,
@@ -319,7 +329,6 @@ impl<F: PrimeField> NativeECConfig<F> {
         let scalar_bits = gate.num_to_bits(ctx, scalar, F::NUM_BITS as usize);
         let mut out = self.load_identity(ctx);
         let mut doubled: AssignedPoint<F> = point.clone();
-        println!("scalar {:?}", scalar);
         for bit in scalar_bits.into_iter() {
             let added = self.add(ctx, &out, &doubled);
             out = self.select_point(ctx, &added, &out, &bit);
@@ -453,6 +462,17 @@ mod test {
                             QuantumCell::Constant(F::one()),
                             QuantumCell::Existing(&is_eq),
                         );
+                    }
+                    {
+                        let neg_a = config.neg(ctx, &assigned_point_a);
+                        let added = config.add(ctx, &assigned_point_a, &neg_a);
+                        let zero = config.load_identity(ctx);
+                        let is_eq = config.is_equal(ctx, &added, &zero);
+                        // config.gate.assert_equal(
+                        //     ctx,
+                        //     QuantumCell::Constant(F::one()),
+                        //     QuantumCell::Existing(&is_eq),
+                        // );
                     }
                     {
                         let added = config.add(ctx, &assigned_point_a, &assigned_point_a);
